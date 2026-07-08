@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Doomsday Watch — Marvel Rewatch Tracker</title>
+<style>
+  :root{
+    --void:#0a0a09;
+    --panel:#131311;
+    --panel-2:#1a1a17;
+    --rust:#8a7a5c;
+    --rust-dim:#5c5340;
+    --green:#3ddc6f;
+    --green-dim:#1f6e3f;
+    --green-glow: rgba(61,220,111,0.35);
+    --text:#e9e6dd;
+    --text-muted:#948f82;
+    --text-faint:#615c50;
+    --line: rgba(138,122,92,0.25);
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--void);
+    color:var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+    padding:0 0 3rem;
+  }
+  .wrap{max-width:760px;margin:0 auto;padding:1.5rem 1.25rem 0;}
+
+  /* ---- Logo ---- */
+  .logo-row{
+    display:flex;align-items:center;gap:14px;
+    padding:1.25rem 0 1.5rem;
+    border-bottom:1px solid var(--line);
+  }
+  .emblem{
+    position:relative;
+    width:52px;height:52px;flex:none;
+    border-radius:50%;
+    background: radial-gradient(circle at 35% 30%, #2a2a24, #0d0d0b 70%);
+    border:1px solid var(--rust);
+    display:flex;align-items:center;justify-content:center;
+    box-shadow: 0 0 18px var(--green-glow), inset 0 0 10px rgba(61,220,111,0.15);
+  }
+  .emblem svg{width:30px;height:30px;}
+  .wordmark{display:flex;flex-direction:column;}
+  .wordmark .top{
+    font-size:11px;letter-spacing:3px;color:var(--rust);
+    font-weight:600;text-transform:uppercase;
+  }
+  .wordmark .main{
+    font-size:26px;letter-spacing:2px;font-weight:700;
+    color:var(--text);text-transform:uppercase;
+    text-shadow: 0 0 14px var(--green-glow);
+  }
+  .wordmark .main span{color:var(--green);}
+
+  /* ---- Mode toggle ---- */
+  .mode-toggle{
+    display:flex;gap:0;margin:1.25rem 0 1rem;
+    border:1px solid var(--line);border-radius:8px;overflow:hidden;
+  }
+  .mode-toggle button{
+    flex:1;padding:10px 12px;background:var(--panel);color:var(--text-muted);
+    border:none;font-size:13px;font-weight:600;letter-spacing:0.5px;
+    cursor:pointer;text-transform:uppercase;
+  }
+  .mode-toggle button.active{
+    background:var(--green-dim);color:#eafff0;
+  }
+  .mode-toggle button:first-child{border-right:1px solid var(--line);}
+
+  /* ---- Progress ---- */
+  .progress-card{
+    background:var(--panel);border:1px solid var(--line);border-radius:10px;
+    padding:1rem 1.1rem;margin-bottom:1.25rem;
+  }
+  .progress-top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;}
+  .progress-label{font-size:12px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;}
+  .progress-pct{font-size:22px;font-weight:700;color:var(--green);}
+  .progress-track{
+    height:8px;border-radius:4px;background:var(--panel-2);
+    overflow:hidden;border:1px solid var(--line);
+  }
+  .progress-fill{
+    height:100%;background:linear-gradient(90deg, var(--green-dim), var(--green));
+    box-shadow:0 0 8px var(--green-glow);
+    transition:width .35s ease;
+  }
+  .progress-count{margin-top:6px;font-size:12.5px;color:var(--text-muted);}
+
+  /* ---- Tabs ---- */
+  .tabs{
+    display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;margin-bottom:1.25rem;
+    scrollbar-width:none;
+  }
+  .tabs::-webkit-scrollbar{display:none;}
+  .tab-btn{
+    flex:none;padding:8px 13px;background:var(--panel);border:1px solid var(--line);
+    border-radius:20px;color:var(--text-muted);font-size:12.5px;font-weight:600;
+    cursor:pointer;white-space:nowrap;
+  }
+  .tab-btn.active{
+    background:var(--rust-dim);color:var(--text);border-color:var(--rust);
+  }
+
+  /* ---- Groups ---- */
+  .group{margin-bottom:1.75rem;}
+  .group-head{
+    display:flex;align-items:baseline;gap:10px;margin-bottom:.5rem;
+    padding-bottom:6px;border-bottom:1px solid var(--line);
+  }
+  .group-head h2{
+    font-size:14px;margin:0;letter-spacing:1px;text-transform:uppercase;color:var(--text);
+  }
+  .group-head .count{font-size:11.5px;color:var(--text-faint);}
+  .subgroup-head{
+    font-size:12px;color:var(--rust);text-transform:uppercase;letter-spacing:1px;
+    margin:14px 0 6px;padding-left:2px;
+  }
+
+  /* ---- List items ---- */
+  .item{
+    display:flex;align-items:center;gap:12px;
+    padding:9px 4px;border-bottom:1px solid rgba(138,122,92,0.12);
+    cursor:pointer;
+  }
+  .item.unreleased{opacity:0.45;cursor:default;}
+  .check{
+    width:20px;height:20px;flex:none;border-radius:5px;
+    border:1.5px solid var(--rust);
+    display:flex;align-items:center;justify-content:center;
+    transition:all .15s ease;
+  }
+  .item.watched .check{
+    background:var(--green);border-color:var(--green);
+    box-shadow:0 0 8px var(--green-glow);
+  }
+  .check svg{width:12px;height:12px;opacity:0;transition:opacity .15s ease;}
+  .item.watched .check svg{opacity:1;}
+  .item-title{flex:1;font-size:14.5px;}
+  .item.watched .item-title{color:var(--text-muted);text-decoration:line-through;text-decoration-color:var(--text-faint);}
+  .item-year{font-size:12.5px;color:var(--text-faint);flex:none;}
+  .badge-upcoming{
+    font-size:10px;color:var(--rust);border:1px solid var(--rust-dim);
+    padding:1px 6px;border-radius:10px;text-transform:uppercase;flex:none;
+  }
+
+  .footer-note{
+    margin-top:2rem;font-size:12px;color:var(--text-faint);
+    border-top:1px solid var(--line);padding-top:1rem;
+    display:flex;justify-content:space-between;align-items:center;gap:1rem;
+  }
+  .reset-btn{
+    background:none;border:1px solid var(--line);color:var(--text-muted);
+    font-size:11.5px;padding:6px 10px;border-radius:6px;cursor:pointer;
+  }
+  .reset-btn:hover{border-color:var(--rust);color:var(--text);}
+  .empty{font-size:13px;color:var(--text-faint);padding:1rem 0;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="logo-row">
+    <div class="emblem">
+      <svg viewBox="0 0 24 24" fill="none">
+        <path d="M12 2 L21 20 H16.5 L12 11 L7.5 20 H3 Z" fill="var(--rust)" stroke="var(--green)" stroke-width="0.6"/>
+      </svg>
+    </div>
+    <div class="wordmark">
+      <span class="top">Marvel rewatch</span>
+      <span class="main">DOOM<span>SDAY</span> WATCH</span>
+    </div>
+  </div>
+
+  <div class="mode-toggle">
+    <button id="mode-core" class="active">Core path</button>
+    <button id="mode-expanded">Expanded universe</button>
+  </div>
+
+  <div class="progress-card">
+    <div class="progress-top">
+      <span class="progress-label" id="progress-label">Core path progress</span>
+      <span class="progress-pct" id="progress-pct">0%</span>
+    </div>
+    <div class="progress-track"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+    <div class="progress-count" id="progress-count">0 of 0 watched</div>
+  </div>
+
+  <div class="tabs" id="tabs"></div>
+  <div id="list"></div>
+
+  <div class="footer-note">
+    <span id="storage-status">Loading your progress…</span>
+    <button class="reset-btn" id="reset-btn">Reset progress</button>
+  </div>
+
+</div>
+
+<script>
+const DATA = [
+  // ---- MCU films (core path) ----
+  {id:"mcu-01",title:"Iron Man",year:2008,universe:"mcu-film",core:true,released:true},
+  {id:"mcu-02",title:"The Incredible Hulk",year:2008,universe:"mcu-film",core:true,released:true},
+  {id:"mcu-03",title:"Iron Man 2",year:2010,universe:"mcu-film",core:true,released:true},
+  {id:"mcu-04",title:"Thor",year:2011,universe:"mcu-film",core:true,released:true},
+  {id:"mcu-05",title:"Captain America: The First Avenger",year:2011,universe:"mcu-film",core:true,released:true},
+  {id:"mcu-06",title:"The Avengers",year:2012,universe:"mcu-film",core:true,released:true},
+  {id:"mcu-07",title:"Iron Man 3",year:2013,universe:"mcu-film",core:true,released:true},
+  {id:"mcu-08",title:"Thor: The Dark World",year:2013,universe:"mcu-film",core:true,released:true},
+  {id:"mcu-09",title:"Captain America: The Winter Soldier",year:2014,universe:"mcu-film",core:true,released:true},
+  {id:"mcu-10",title:"Guardians of the Galaxy",year:2014,universe:"mcu-film",core:true,released:true},
+  {id:"mcu-11",title:"Avengers: Age of Ultron",year:2015,universe:"mcu-film",core:true,released:true},
+  {id:"mcu-12",title:"Ant-Man",year:2015,universe:"mcu-film",core:true,released:true},
+  {id:"mcu-13",title:"Captain America: Civil War",year:2016,universe:"mcu-film",core:true,released:true},
+  {id:"mcu-14",title:"Doctor Strange",year:2016,universe:"mcu-film",core:true,released:true},
+  {id:"mcu-15",title:"Spider-Man: Homecoming",year:2017,universe:"mcu-film",core:true,released:true},
+  {id:"mcu-16",title:"Thor: Ragnarok",year:2017,universe:"mcu-film",core:true,released:true},
+  {id:"mcu-17",title:"Black Panther",year:2018,universe:"mcu-film",core:true,released:true},
+  {id:"mcu-18",title:"Avengers: Infinity War",year:2018,universe:"mcu-film",core:true,released:true},
+  {id:"mcu-19",title:"Ant-Man and the Wasp",year:2018,universe:"mcu-film",core:true,released:true},
+  {id:"mcu-20",title:"Captain Marvel",year:2019,universe:"mcu-film",core:true,released:true},
+  {id:"mcu-21",title:"Avengers: Endgame",year:2019,universe:"mcu-film",core:true,released:true},
+  {id:"mcu-22",title:"Spider-Man: Far From Home",year:2019,universe:"mcu-film",core:true,released:true},
+  {id:"mcu-23",title:"Black Widow",year:2021,universe:"mcu-film",core:true,released:true},
+  {id:"mcu-24",title:"Shang-Chi and the Legend of the Ten Rings",year:2021,universe:"mcu-film",core:true,released:true},
+  {id:"mcu-25",title:"Eternals",year:2021,universe:"mcu-film",core:true,released:true},
+  {id:"mcu-26",title:"Spider-Man: No Way Home",year:2021,universe:"mcu-film",core:true,released:true},
+  {id:"mcu-27",title:"Doctor Strange in the Multiverse of Madness",year:2022,universe:"mcu-film",core:true,released:true},
+  {id:"mcu-28",title:"Thor: Love and Thunder",year:2022,universe:"mcu-film",core:true,released:true},
+  {id:"mcu-29",title:"Black Panther: Wakanda Forever",year:2022,universe:"mcu-film",core:true,released:true},
+  {id:"mcu-30",title:"Ant-Man and the Wasp: Quantumania",year:2023,universe:"mcu-film",core:true,released:true},
+  {id:"mcu-31",title:"Guardians of the Galaxy Vol. 3",year:2023,universe:"mcu-film",core:true,released:true},
+  {id:"mcu-32",title:"The Marvels",year:2023,universe:"mcu-film",core:true,released:true},
+  {id:"mcu-33",title:"Deadpool & Wolverine",year:2024,universe:"mcu-film",core:true,released:true},
+  {id:"mcu-34",title:"Captain America: Brave New World",year:2025,universe:"mcu-film",core:true,released:true},
+  {id:"mcu-35",title:"Thunderbolts*",year:2025,universe:"mcu-film",core:true,released:true},
+  {id:"mcu-36",title:"The Fantastic Four: First Steps",year:2025,universe:"mcu-film",core:true,released:true},
+  {id:"mcu-37",title:"Spider-Man: Brand New Day",year:2026,universe:"mcu-film",core:true,released:false},
+  {id:"mcu-38",title:"Avengers: Doomsday",year:2026,universe:"mcu-film",core:true,released:false},
+  {id:"mcu-39",title:"Avengers: Secret Wars",year:2027,universe:"mcu-film",core:true,released:false},
+
+  // ---- MCU / Disney+ series (expanded) ----
+  {id:"ser-01",title:"WandaVision",year:2021,universe:"mcu-series",core:false,released:true},
+  {id:"ser-02",title:"The Falcon and the Winter Soldier",year:2021,universe:"mcu-series",core:false,released:true},
+  {id:"ser-03",title:"Loki (Season 1)",year:2021,universe:"mcu-series",core:false,released:true},
+  {id:"ser-04",title:"What If...? (Season 1)",year:2021,universe:"mcu-series",core:false,released:true},
+  {id:"ser-05",title:"Hawkeye",year:2021,universe:"mcu-series",core:false,released:true},
+  {id:"ser-06",title:"Moon Knight",year:2022,universe:"mcu-series",core:false,released:true},
+  {id:"ser-07",title:"Ms. Marvel",year:2022,universe:"mcu-series",core:false,released:true},
+  {id:"ser-08",title:"She-Hulk: Attorney at Law",year:2022,universe:"mcu-series",core:false,released:true},
+  {id:"ser-09",title:"Werewolf by Night (special)",year:2022,universe:"mcu-series",core:false,released:true},
+  {id:"ser-10",title:"Guardians of the Galaxy Holiday Special",year:2022,universe:"mcu-series",core:false,released:true},
+  {id:"ser-11",title:"Secret Invasion",year:2023,universe:"mcu-series",core:false,released:true},
+  {id:"ser-12",title:"Loki (Season 2)",year:2023,universe:"mcu-series",core:false,released:true},
+  {id:"ser-13",title:"What If...? (Season 2)",year:2023,universe:"mcu-series",core:false,released:true},
+  {id:"ser-14",title:"Echo",year:2024,universe:"mcu-series",core:false,released:true},
+  {id:"ser-15",title:"Agatha All Along",year:2024,universe:"mcu-series",core:false,released:true},
+  {id:"ser-16",title:"Daredevil: Born Again (Season 1)",year:2025,universe:"mcu-series",core:false,released:true},
+  {id:"ser-17",title:"Ironheart",year:2025,universe:"mcu-series",core:false,released:true},
+  {id:"ser-18",title:"Eyes of Wakanda",year:2025,universe:"mcu-series",core:false,released:true},
+  {id:"ser-19",title:"Daredevil: Born Again (Season 2)",year:2026,universe:"mcu-series",core:false,released:true},
+  {id:"ser-20",title:"Wonder Man",year:2026,universe:"mcu-series",core:false,released:true},
+  {id:"ser-21",title:"Vision Quest",year:2026,universe:"mcu-series",core:false,released:false},
+
+  // ---- Netflix Defenders (now MCU canon, expanded) ----
+  {id:"net-01",title:"Daredevil",year:2015,universe:"netflix",core:false,released:true},
+  {id:"net-02",title:"Jessica Jones",year:2015,universe:"netflix",core:false,released:true},
+  {id:"net-03",title:"Luke Cage",year:2016,universe:"netflix",core:false,released:true},
+  {id:"net-04",title:"Iron Fist",year:2017,universe:"netflix",core:false,released:true},
+  {id:"net-05",title:"The Defenders",year:2017,universe:"netflix",core:false,released:true},
+  {id:"net-06",title:"The Punisher",year:2017,universe:"netflix",core:false,released:true},
+
+  // ---- Fox universe (expanded), nested by sub-franchise ----
+  {id:"fox-01",title:"X-Men",year:2000,universe:"fox",subgroup:"X-Men saga",core:false,released:true},
+  {id:"fox-02",title:"X2: X-Men United",year:2003,universe:"fox",subgroup:"X-Men saga",core:false,released:true},
+  {id:"fox-03",title:"X-Men: The Last Stand",year:2006,universe:"fox",subgroup:"X-Men saga",core:false,released:true},
+  {id:"fox-05",title:"X-Men: First Class",year:2011,universe:"fox",subgroup:"X-Men saga",core:false,released:true},
+  {id:"fox-07",title:"X-Men: Days of Future Past",year:2014,universe:"fox",subgroup:"X-Men saga",core:false,released:true},
+  {id:"fox-09",title:"X-Men: Apocalypse",year:2016,universe:"fox",subgroup:"X-Men saga",core:false,released:true},
+  {id:"fox-12",title:"Dark Phoenix",year:2019,universe:"fox",subgroup:"X-Men saga",core:false,released:true},
+
+  {id:"fox-04",title:"X-Men Origins: Wolverine",year:2009,universe:"fox",subgroup:"Wolverine",core:false,released:true},
+  {id:"fox-06",title:"The Wolverine",year:2013,universe:"fox",subgroup:"Wolverine",core:false,released:true},
+  {id:"fox-10",title:"Logan",year:2017,universe:"fox",subgroup:"Wolverine",core:false,released:true},
+
+  {id:"fox-08",title:"Deadpool",year:2016,universe:"fox",subgroup:"Deadpool",core:false,released:true},
+  {id:"fox-11",title:"Deadpool 2",year:2018,universe:"fox",subgroup:"Deadpool",core:false,released:true},
+
+  {id:"fox-ff-01",title:"Fantastic Four",year:2005,universe:"fox",subgroup:"Fantastic Four (Fox era)",core:false,released:true},
+  {id:"fox-ff-02",title:"Fantastic Four: Rise of the Silver Surfer",year:2007,universe:"fox",subgroup:"Fantastic Four (Fox era)",core:false,released:true},
+
+  {id:"fox-13",title:"The New Mutants",year:2020,universe:"fox",subgroup:"New Mutants",core:false,released:true},
+
+  // ---- Sony (nested subgroups, expanded) ----
+  {id:"sny-raimi-01",title:"Spider-Man",year:2002,universe:"sony",subgroup:"Raimi trilogy",core:false,released:true},
+  {id:"sny-raimi-02",title:"Spider-Man 2",year:2004,universe:"sony",subgroup:"Raimi trilogy",core:false,released:true},
+  {id:"sny-raimi-03",title:"Spider-Man 3",year:2007,universe:"sony",subgroup:"Raimi trilogy",core:false,released:true},
+
+  {id:"sny-amz-01",title:"The Amazing Spider-Man",year:2012,universe:"sony",subgroup:"Amazing Spider-Man",core:false,released:true},
+  {id:"sny-amz-02",title:"The Amazing Spider-Man 2",year:2014,universe:"sony",subgroup:"Amazing Spider-Man",core:false,released:true},
+
+  {id:"sny-ssu-01",title:"Venom",year:2018,universe:"sony",subgroup:"Spider-Man Universe (SSU)",core:false,released:true},
+  {id:"sny-ssu-02",title:"Venom: Let There Be Carnage",year:2021,universe:"sony",subgroup:"Spider-Man Universe (SSU)",core:false,released:true},
+  {id:"sny-ssu-03",title:"Morbius",year:2022,universe:"sony",subgroup:"Spider-Man Universe (SSU)",core:false,released:true},
+  {id:"sny-ssu-04",title:"Madame Web",year:2024,universe:"sony",subgroup:"Spider-Man Universe (SSU)",core:false,released:true},
+  {id:"sny-ssu-05",title:"Venom: The Last Dance",year:2024,universe:"sony",subgroup:"Spider-Man Universe (SSU)",core:false,released:true},
+  {id:"sny-ssu-06",title:"Kraven the Hunter",year:2024,universe:"sony",subgroup:"Spider-Man Universe (SSU)",core:false,released:true},
+  {id:"sny-ssu-07",title:"Spider-Noir (TV series)",year:2026,universe:"sony",subgroup:"Spider-Man Universe (SSU)",core:false,released:true},
+
+  {id:"sny-sv-01",title:"Spider-Man: Into the Spider-Verse",year:2018,universe:"sony",subgroup:"Spider-Verse (animated)",core:false,released:true},
+  {id:"sny-sv-02",title:"Spider-Man: Across the Spider-Verse",year:2023,universe:"sony",subgroup:"Spider-Verse (animated)",core:false,released:true},
+  {id:"sny-sv-03",title:"Spider-Man: Beyond the Spider-Verse",year:2027,universe:"sony",subgroup:"Spider-Verse (animated)",core:false,released:false},
+];
+
+const UNIVERSE_LABELS = {
+  "mcu-film":"MCU films",
+  "mcu-series":"Disney+ / MCU series",
+  "netflix":"Netflix Defenders",
+  "fox":"Fox universe",
+  "sony":"Sony (Spider-Man properties)"
+};
+const UNIVERSE_ORDER = ["mcu-film","mcu-series","netflix","fox","sony"];
+const SUBGROUP_ORDERS = {
+  "fox": ["X-Men saga","Wolverine","Deadpool","Fantastic Four (Fox era)","New Mutants"],
+  "sony": ["Raimi trilogy","Amazing Spider-Man","Spider-Man Universe (SSU)","Spider-Verse (animated)"]
+};
+
+let watched = new Set();
+let mode = "core";        // "core" | "expanded"
+let activeTab = "all";    // "all" | universe key
+
+const STORAGE_KEY = "watched-titles";
+
+async function loadProgress(){
+  try{
+    const res = await window.storage.get(STORAGE_KEY, false);
+    if(res && res.value){
+      watched = new Set(JSON.parse(res.value));
+    }
+    document.getElementById("storage-status").textContent = "Progress saved on this device";
+  }catch(e){
+    document.getElementById("storage-status").textContent = "Progress saved on this device";
+  }
+  render();
+}
+
+async function saveProgress(){
+  try{
+    await window.storage.set(STORAGE_KEY, JSON.stringify([...watched]), false);
+  }catch(e){
+    console.error("Could not save progress", e);
+  }
+}
+
+function toggleWatched(id){
+  if(watched.has(id)) watched.delete(id); else watched.add(id);
+  saveProgress();
+  render();
+}
+
+function itemsForMode(list){
+  return mode === "core" ? list.filter(i => i.core) : list;
+}
+
+function buildTabs(){
+  const tabs = document.getElementById("tabs");
+  tabs.innerHTML = "";
+
+  if(mode === "core"){
+    // Core path only ever contains MCU films, so that's the only tab.
+    activeTab = "mcu-film";
+    const btn = document.createElement("button");
+    btn.className = "tab-btn active";
+    btn.textContent = UNIVERSE_LABELS["mcu-film"];
+    tabs.appendChild(btn);
+    return;
+  }
+
+  if(activeTab === "mcu-film" && mode === "expanded"){
+    // coming from core mode, default back to "all" in expanded view
+    activeTab = "all";
+  }
+
+  const all = document.createElement("button");
+  all.className = "tab-btn" + (activeTab === "all" ? " active" : "");
+  all.textContent = "All";
+  all.onclick = () => { activeTab = "all"; render(); };
+  tabs.appendChild(all);
+
+  UNIVERSE_ORDER.forEach(u => {
+    const btn = document.createElement("button");
+    btn.className = "tab-btn" + (activeTab === u ? " active" : "");
+    btn.textContent = UNIVERSE_LABELS[u];
+    btn.onclick = () => { activeTab = u; render(); };
+    tabs.appendChild(btn);
+  });
+}
+
+function renderItem(item){
+  const isWatched = watched.has(item.id);
+  const el = document.createElement("div");
+  el.className = "item" + (isWatched ? " watched" : "") + (!item.released ? " unreleased" : "");
+  el.innerHTML = `
+    <div class="check">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#0a0a09" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="20 6 9 17 4 12"></polyline>
+      </svg>
+    </div>
+    <div class="item-title">${item.title}</div>
+    ${!item.released ? '<span class="badge-upcoming">Upcoming</span>' : ''}
+    <div class="item-year">${item.year}</div>
+  `;
+  if(item.released){
+    el.onclick = () => toggleWatched(item.id);
+  }
+  return el;
+}
+
+function render(){
+  buildTabs();
+
+  const scoped = itemsForMode(DATA);
+  const forStats = scoped.filter(i => i.released);
+  const total = forStats.length;
+  const done = forStats.filter(i => watched.has(i.id)).length;
+  const pct = total ? Math.round((done/total)*100) : 0;
+
+  document.getElementById("progress-label").textContent =
+    (mode === "core" ? "Core path progress" : "Expanded universe progress");
+  document.getElementById("progress-pct").textContent = pct + "%";
+  document.getElementById("progress-fill").style.width = pct + "%";
+  document.getElementById("progress-count").textContent = `${done} of ${total} watched`;
+
+  document.getElementById("mode-core").classList.toggle("active", mode==="core");
+  document.getElementById("mode-expanded").classList.toggle("active", mode==="expanded");
+
+  const list = document.getElementById("list");
+  list.innerHTML = "";
+
+  const universesToShow = activeTab === "all" ? UNIVERSE_ORDER : [activeTab];
+
+  let renderedAny = false;
+
+  universesToShow.forEach(u => {
+    let group = scoped.filter(i => i.universe === u);
+    if(mode === "core") group = group.filter(i => i.core);
+    if(group.length === 0) return;
+    renderedAny = true;
+
+    const groupEl = document.createElement("div");
+    groupEl.className = "group";
+
+    const head = document.createElement("div");
+    head.className = "group-head";
+    const watchedInGroup = group.filter(i => i.released && watched.has(i.id)).length;
+    const releasedInGroup = group.filter(i => i.released).length;
+    head.innerHTML = `<h2>${UNIVERSE_LABELS[u]}</h2><span class="count">${watchedInGroup}/${releasedInGroup}</span>`;
+    groupEl.appendChild(head);
+
+    if(SUBGROUP_ORDERS[u]){
+      SUBGROUP_ORDERS[u].forEach(sub => {
+        const subItems = group.filter(i => i.subgroup === sub);
+        if(subItems.length === 0) return;
+        const subHead = document.createElement("div");
+        subHead.className = "subgroup-head";
+        subHead.textContent = sub;
+        groupEl.appendChild(subHead);
+        subItems.forEach(i => groupEl.appendChild(renderItem(i)));
+      });
+    } else {
+      group.forEach(i => groupEl.appendChild(renderItem(i)));
+    }
+
+    list.appendChild(groupEl);
+  });
+
+  if(!renderedAny){
+    const empty = document.createElement("div");
+    empty.className = "empty";
+    empty.textContent = "Nothing in this universe for the current path. Switch to Expanded universe to see it.";
+    list.appendChild(empty);
+  }
+}
+
+document.getElementById("mode-core").onclick = () => { mode = "core"; render(); };
+document.getElementById("mode-expanded").onclick = () => { mode = "expanded"; render(); };
+document.getElementById("reset-btn").onclick = async () => {
+  if(confirm("Clear all watched progress on this device?")){
+    watched = new Set();
+    await saveProgress();
+    render();
+  }
+};
+
+loadProgress();
+</script>
+</body>
+</html>
